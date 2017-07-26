@@ -21,7 +21,41 @@ import java.nio.file.Paths;
  * @author dnlkhuu77
  */
 public class Main {
-     public static void main(String[] args) throws UnsupportedTagException, InvalidDataException, IOException, NotSupportedException{
+    public static void main(String[] args) throws UnsupportedTagException, InvalidDataException, IOException, NotSupportedException{
+        LinkedList song_list = new LinkedList();
+        
+        System.out.println("What folder?");
+        Scanner scan = new Scanner(System.in);
+        String folder = scan.nextLine();
+        
+        System.out.println("List the songs in your preferred order. Type -1 if you are finished");
+        int song_added = 1; //this will be the loop stopper
+        
+        while(song_added == 1){
+            String song_string = scan.nextLine();
+            if(song_string.equals("-1")){
+                song_added = -1;
+                break;
+            }
+            
+            song_list.add(song_string);
+        }
+        
+        if(song_list.isEmpty())
+            System.exit(0);
+        
+        //iterate through the folder to match the first string of the linkedlist
+        int size = song_list.size();
+        
+        for(int i = 0; i < size; i++){
+            String current_song = (String) song_list.get(i);
+            System.out.println("Current song #" + i + ": " + current_song);
+            
+            
+        }
+        
+        
+         
         Mp3File mp3file = new Mp3File("Anime/Hibike/DREAM SOLISTER [Full].mp3");
         System.out.println("Length of this mp3 is: " + mp3file.getLengthInSeconds() + " seconds");
         System.out.println("Bitrate: " + mp3file.getBitrate() + " kbps " + (mp3file.isVbr() ? "(VBR)" : "(CBR)"));
@@ -42,5 +76,26 @@ public class Main {
         }else{
              System.out.println("Nothing, the directory is: " + Paths.get(".").toAbsolutePath().normalize().toString());
          }
+    }
+     
+    //test if a s1 is the substring of s2 using recursion
+    public static boolean isSubstring(String s1, String s2, int m, int n){
+        if (m == 0) 
+            return true;
+        if (n == 0) 
+            return false;
+             
+        // If last characters of two strings are matching
+        if (s1.charAt(m-1) == s2.charAt(n-1))
+            return isSubstring(s1, s2, m-1, n-1);
+ 
+        // If last characters are not matching
+        return isSubstring(s1, s2, m, n-1);
+    }
+    
+    //open files in the directory and search for matching song names
+    public static void findingSongs(String s1){
+        //search the folder at the file names and use the substring method to find the appropirate songs.
+        
     }
 }
