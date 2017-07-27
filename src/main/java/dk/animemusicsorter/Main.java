@@ -14,6 +14,7 @@ import com.mpatric.mp3agic.UnsupportedTagException;
 import java.io.IOException;
 import java.util.*;
 import java.nio.file.Paths;
+import java.io.*;
 
 
 /**
@@ -37,24 +38,18 @@ public class Main {
                 song_added = -1;
                 break;
             }
-            
             song_list.add(song_string);
         }
         
         if(song_list.isEmpty())
-            System.exit(0);
-        
-        //iterate through the folder to match the first string of the linkedlist
+            System.exit(0); 
         int size = song_list.size();
         
-        for(int i = 0; i < size; i++){
-            String current_song = (String) song_list.get(i);
-            System.out.println("Current song #" + i + ": " + current_song);
-            
-            
-        }
-        
-        
+        String[] song_queue = new String[size*2];
+        //should contain a array of all the songs in the order of TV Size, Full etc.
+        song_queue = findingSongs(folder, song_list);
+
+        //make another method to take bother song_list and song_queue to do the mp3 changes in order.
          
         Mp3File mp3file = new Mp3File("Anime/Hibike/DREAM SOLISTER [Full].mp3");
         System.out.println("Length of this mp3 is: " + mp3file.getLengthInSeconds() + " seconds");
@@ -64,38 +59,69 @@ public class Main {
         System.out.println("Has ID3v2 tag?: " + (mp3file.hasId3v2Tag() ? "YES" : "NO"));
         System.out.println("Has custom tag?: " + (mp3file.hasCustomTag() ? "YES" : "NO"));
         
-         if (mp3file.hasId3v1Tag()) {
-        	ID3v1 id3v1Tag = mp3file.getId3v1Tag();
-        	System.out.println("Track: " + id3v1Tag.getTrack());
-        	System.out.println("Artist: " + id3v1Tag.getArtist());
-        	System.out.println("Title: " + id3v1Tag.getTitle());
-        	System.out.println("Album: " + id3v1Tag.getAlbum());
-        	System.out.println("Year: " + id3v1Tag.getYear());
-        	System.out.println("Genre: " + id3v1Tag.getGenre() + " (" + id3v1Tag.getGenreDescription() + ")");
-        	System.out.println("Comment: " + id3v1Tag.getComment());
+        if (mp3file.hasId3v1Tag()) {
+            ID3v1 id3v1Tag = mp3file.getId3v1Tag();
+            System.out.println("Track: " + id3v1Tag.getTrack());
+            System.out.println("Artist: " + id3v1Tag.getArtist());
+            System.out.println("Title: " + id3v1Tag.getTitle());
+            System.out.println("Album: " + id3v1Tag.getAlbum());
+            System.out.println("Year: " + id3v1Tag.getYear());
+            System.out.println("Genre: " + id3v1Tag.getGenre() + " (" + id3v1Tag.getGenreDescription() + ")");
+            System.out.println("Comment: " + id3v1Tag.getComment());
         }else{
-             System.out.println("Nothing, the directory is: " + Paths.get(".").toAbsolutePath().normalize().toString());
-         }
-    }
-     
-    //test if a s1 is the substring of s2 using recursion
-    public static boolean isSubstring(String s1, String s2, int m, int n){
-        if (m == 0) 
-            return true;
-        if (n == 0) 
-            return false;
-             
-        // If last characters of two strings are matching
-        if (s1.charAt(m-1) == s2.charAt(n-1))
-            return isSubstring(s1, s2, m-1, n-1);
- 
-        // If last characters are not matching
-        return isSubstring(s1, s2, m, n-1);
+            System.out.println("Nothing, the directory is: " + Paths.get(".").toAbsolutePath().normalize().toString());
+        }
     }
     
     //open files in the directory and search for matching song names
-    public static void findingSongs(String s1){
+    //you should return an array of strings (around 5) that contains the actual names of songs 
+    public static String[] findingSongs(String folder_name, LinkedList song_list) throws UnsupportedTagException, InvalidDataException, IOException, NotSupportedException{
         //search the folder at the file names and use the substring method to find the appropirate songs.
+        int size = song_list.size();
+        String[] results = new String[size*2];
+        int placement = 0; //used to place the songs in the array
+        
+        File folder = new File(folder_name);
+        File[] files = folder.listFiles();
+        
+        //go through every string in the LinkedList
+        for(int a = 0; a < song_list.size(); a++){
+            String song_string = (String)song_list.get(a);
+            
+            //search through every file in the folder
+            for(int i = 0; i < files.length; i++){
+                if(files[i].isFile()){
+                    String current_file = files[i].getName();
+                    
+                    //search 
+                    if(current_file.contains(song_string)){
+                        //save the 2 (TV-Size and Full songs)
+                        if(results[placement] == null && placement % 2 == 0){ //it's every two songs
+                            results[placement] = current_file; //saving the name of the file in the array
+                            placement++;
+                        }
+                        else if(results[placement] == null && placement % 2 == 1){ //the cursor moved to the second bit
+                            String song1_s = results[placement - 1];
+                            Mp3File song1 = new Mp3File(folder_name + "/" + song1_s);
+                            Mp3File song2 = new Mp3File(folder_name + "/" + current_file);
+                            long length1 = song1.getLengthInSeconds();
+                            long length2 = song2.getLengthInSeconds();
+                            
+                            if(length1 > length2){
+                                results[placement] = results[placement - 1];
+                                results[placement-1] = current_file;
+                            }else{
+                                results[placement] = current_file;
+                            }
+                            placement++;
+                        }
+                    }
+                }
+            }
+        }
+        //at the end of the loop
+        
+        return results;
         
     }
 }
