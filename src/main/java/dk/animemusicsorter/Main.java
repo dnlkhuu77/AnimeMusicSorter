@@ -28,6 +28,7 @@ public class Main {
         System.out.println("What folder?");
         Scanner scan = new Scanner(System.in);
         String folder = scan.nextLine();
+        String album_name = "";
         
         System.out.println("List the songs in your preferred order. Type -1 if you are finished");
         int song_added = 1; //this will be the loop stopper
@@ -35,6 +36,10 @@ public class Main {
         while(song_added == 1){
             String song_string = scan.nextLine();
             if(song_string.equals("-1")){
+                
+                System.out.println("What is the album name?");
+                Scanner scan_2 = new Scanner(System.in);
+                album_name = scan_2.nextLine();
                 song_added = -1;
                 break;
             }
@@ -47,30 +52,12 @@ public class Main {
         
         String[] song_queue = new String[size*2];
         //should contain a array of all the songs in the order of TV Size, Full etc.
+        //POSSIBLE ERROR OF PASSING BY REFERENCE
         song_queue = findingSongs(folder, song_list);
 
         //make another method to take bother song_list and song_queue to do the mp3 changes in order.
-         
-        Mp3File mp3file = new Mp3File("Anime/Hibike/DREAM SOLISTER [Full].mp3");
-        System.out.println("Length of this mp3 is: " + mp3file.getLengthInSeconds() + " seconds");
-        System.out.println("Bitrate: " + mp3file.getBitrate() + " kbps " + (mp3file.isVbr() ? "(VBR)" : "(CBR)"));
-        System.out.println("Sample rate: " + mp3file.getSampleRate() + " Hz");
-        System.out.println("Has ID3v1 tag?: " + (mp3file.hasId3v1Tag() ? "YES" : "NO"));
-        System.out.println("Has ID3v2 tag?: " + (mp3file.hasId3v2Tag() ? "YES" : "NO"));
-        System.out.println("Has custom tag?: " + (mp3file.hasCustomTag() ? "YES" : "NO"));
-        
-        if (mp3file.hasId3v1Tag()) {
-            ID3v1 id3v1Tag = mp3file.getId3v1Tag();
-            System.out.println("Track: " + id3v1Tag.getTrack());
-            System.out.println("Artist: " + id3v1Tag.getArtist());
-            System.out.println("Title: " + id3v1Tag.getTitle());
-            System.out.println("Album: " + id3v1Tag.getAlbum());
-            System.out.println("Year: " + id3v1Tag.getYear());
-            System.out.println("Genre: " + id3v1Tag.getGenre() + " (" + id3v1Tag.getGenreDescription() + ")");
-            System.out.println("Comment: " + id3v1Tag.getComment());
-        }else{
-            System.out.println("Nothing, the directory is: " + Paths.get(".").toAbsolutePath().normalize().toString());
-        }
+        namingSongs(folder, song_queue, song_list, album_name);
+        //FINAL
     }
     
     //open files in the directory and search for matching song names
@@ -123,5 +110,40 @@ public class Main {
         
         return results;
         
+    }
+    
+    public static void namingSongs(String folder, String[] songs, LinkedList song_name, String album_name) throws UnsupportedTagException, InvalidDataException, IOException, NotSupportedException{
+        //the array is always half_size;
+        //the songs are order 1. Oath Sign [TV-Size], 2. Oath Sign[Full], 3. to the beginning [TV-Size]
+        //must change this ordering 
+        
+        //USED FOR INDEX FOR ARRAY, BUT MUST +1 TO USE FOR ENTERING THE TAG
+        int f_marker = 0; //increment by every odd number
+        int l_marker = songs.length / 2; //increment by every even number
+        
+        for(int i = 0; i < songs.length; i++){
+            
+        }
+        
+        Mp3File mp3file = new Mp3File("Anime/Hibike/DREAM SOLISTER [Full].mp3");
+        System.out.println("Length of this mp3 is: " + mp3file.getLengthInSeconds() + " seconds");
+        System.out.println("Bitrate: " + mp3file.getBitrate() + " kbps " + (mp3file.isVbr() ? "(VBR)" : "(CBR)"));
+        System.out.println("Sample rate: " + mp3file.getSampleRate() + " Hz");
+        System.out.println("Has ID3v1 tag?: " + (mp3file.hasId3v1Tag() ? "YES" : "NO"));
+        System.out.println("Has ID3v2 tag?: " + (mp3file.hasId3v2Tag() ? "YES" : "NO"));
+        System.out.println("Has custom tag?: " + (mp3file.hasCustomTag() ? "YES" : "NO"));
+        
+        if (mp3file.hasId3v1Tag()) {
+            ID3v1 id3v1Tag = mp3file.getId3v1Tag();
+            System.out.println("Track: " + id3v1Tag.getTrack());
+            System.out.println("Artist: " + id3v1Tag.getArtist());
+            System.out.println("Title: " + id3v1Tag.getTitle());
+            System.out.println("Album: " + id3v1Tag.getAlbum());
+            System.out.println("Year: " + id3v1Tag.getYear());
+            System.out.println("Genre: " + id3v1Tag.getGenre() + " (" + id3v1Tag.getGenreDescription() + ")");
+            System.out.println("Comment: " + id3v1Tag.getComment());
+        }else{
+            System.out.println("Nothing, the directory is: " + Paths.get(".").toAbsolutePath().normalize().toString());
+        }
     }
 }
