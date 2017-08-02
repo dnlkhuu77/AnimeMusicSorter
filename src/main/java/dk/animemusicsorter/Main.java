@@ -7,6 +7,7 @@
 package dk.animemusicsorter;
 
 import com.mpatric.mp3agic.ID3v1;
+import com.mpatric.mp3agic.ID3v1Tag;
 import com.mpatric.mp3agic.InvalidDataException;
 import com.mpatric.mp3agic.Mp3File;
 import com.mpatric.mp3agic.NotSupportedException;
@@ -120,30 +121,45 @@ public class Main {
         //USED FOR INDEX FOR ARRAY, BUT MUST +1 TO USE FOR ENTERING THE TAG
         int f_marker = 0; //increment by every odd number
         int l_marker = songs.length / 2; //increment by every even number
+        String current = "";
+        int song_title = 0; //this is to remade the song_title
         
         for(int i = 0; i < songs.length; i++){
+            if(i % 2 == 0){
+                current = (String) song_name.get(song_title);
+                song_title++; 
+            }
+            
+            String s = songs[i];
+            s = folder + "/" + s + ".mp3"; //must be Anime/Hibike
+            
+            Mp3File mp3file = new Mp3File(s);
+            ID3v1 id3v1Tag;
+            if (mp3file.hasId3v1Tag()) {
+                id3v1Tag = mp3file.getId3v1Tag();
+            }else{
+                id3v1Tag = new ID3v1Tag();
+        	mp3file.setId3v1Tag(id3v1Tag);
+            }
+            
+            if((i+1) % 2 == 1){ //if the track is odd
+                id3v1Tag.setTitle(song_title + " [TV-Size]");
+                id3v1Tag.setTrack(Integer.toString(f_marker+1));
+                f_marker++;
+                id3v1Tag.setAlbum(album_name);
+                id3v1Tag.setYear("");
+                mp3file.save(song_title + ".mp3");
+            }else{
+                id3v1Tag.setTitle(song_title + " [TV-Size]");
+                id3v1Tag.setTrack(Integer.toString(l_marker+1));
+                l_marker++;
+                id3v1Tag.setAlbum(album_name);
+                id3v1Tag.setYear("");
+                mp3file.save(song_title + ".mp3");
+                //do v2 tags later
+            }
             
         }
         
-        Mp3File mp3file = new Mp3File("Anime/Hibike/DREAM SOLISTER [Full].mp3");
-        System.out.println("Length of this mp3 is: " + mp3file.getLengthInSeconds() + " seconds");
-        System.out.println("Bitrate: " + mp3file.getBitrate() + " kbps " + (mp3file.isVbr() ? "(VBR)" : "(CBR)"));
-        System.out.println("Sample rate: " + mp3file.getSampleRate() + " Hz");
-        System.out.println("Has ID3v1 tag?: " + (mp3file.hasId3v1Tag() ? "YES" : "NO"));
-        System.out.println("Has ID3v2 tag?: " + (mp3file.hasId3v2Tag() ? "YES" : "NO"));
-        System.out.println("Has custom tag?: " + (mp3file.hasCustomTag() ? "YES" : "NO"));
-        
-        if (mp3file.hasId3v1Tag()) {
-            ID3v1 id3v1Tag = mp3file.getId3v1Tag();
-            System.out.println("Track: " + id3v1Tag.getTrack());
-            System.out.println("Artist: " + id3v1Tag.getArtist());
-            System.out.println("Title: " + id3v1Tag.getTitle());
-            System.out.println("Album: " + id3v1Tag.getAlbum());
-            System.out.println("Year: " + id3v1Tag.getYear());
-            System.out.println("Genre: " + id3v1Tag.getGenre() + " (" + id3v1Tag.getGenreDescription() + ")");
-            System.out.println("Comment: " + id3v1Tag.getComment());
-        }else{
-            System.out.println("Nothing, the directory is: " + Paths.get(".").toAbsolutePath().normalize().toString());
-        }
     }
 }
