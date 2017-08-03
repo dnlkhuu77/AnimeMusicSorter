@@ -8,6 +8,8 @@ package dk.animemusicsorter;
 
 import com.mpatric.mp3agic.ID3v1;
 import com.mpatric.mp3agic.ID3v1Tag;
+import com.mpatric.mp3agic.ID3v2;
+import com.mpatric.mp3agic.ID3v24Tag;
 import com.mpatric.mp3agic.InvalidDataException;
 import com.mpatric.mp3agic.Mp3File;
 import com.mpatric.mp3agic.NotSupportedException;
@@ -36,25 +38,35 @@ public class Main {
         
         while(song_added == 1){
             String song_string = scan.nextLine();
+            System.out.println();
+            
             if(song_string.equals("-1")){
-                
                 System.out.println("What is the album name?");
                 Scanner scan_2 = new Scanner(System.in);
                 album_name = scan_2.nextLine();
                 song_added = -1;
                 break;
             }
+            
             song_list.add(song_string);
         }
         
-        if(song_list.isEmpty())
+        if(song_list.isEmpty()){
+            System.out.println("You didn't add any songs");
             System.exit(0); 
+        }
         int size = song_list.size();
         
-        String[] song_queue = new String[size*2];
         //should contain a array of all the songs in the order of TV Size, Full etc.
+        String[] song_queue = new String[size*2];
+        
         //POSSIBLE ERROR OF PASSING BY REFERENCE
         song_queue = findingSongs(folder, song_list);
+        
+        if(song_queue == null){
+            System.out.println("There are no files in the folder");
+            System.exit(0);
+        }
 
         //make another method to take bother song_list and song_queue to do the mp3 changes in order.
         namingSongs(folder, song_queue, song_list, album_name);
@@ -70,11 +82,13 @@ public class Main {
         int placement = 0; //used to place the songs in the array
         
         File folder = new File(folder_name);
+        if(folder.exists())
+            return null;
         File[] files = folder.listFiles();
         
         //go through every string in the LinkedList
         for(int a = 0; a < song_list.size(); a++){
-            String song_string = (String)song_list.get(a);
+            String song_string = (String) song_list.get(a);
             
             //search through every file in the folder
             for(int i = 0; i < files.length; i++){
@@ -84,14 +98,14 @@ public class Main {
                     //search 
                     if(current_file.contains(song_string)){
                         //save the 2 (TV-Size and Full songs)
-                        if(results[placement] == null && placement % 2 == 0){ //it's every two songs
+                        if(results[placement] == null && placement % 2 == 0){ //at the first element
                             results[placement] = current_file; //saving the name of the file in the array
                             placement++;
                         }
                         else if(results[placement] == null && placement % 2 == 1){ //the cursor moved to the second bit
                             String song1_s = results[placement - 1];
-                            Mp3File song1 = new Mp3File(folder_name + "/" + song1_s);
-                            Mp3File song2 = new Mp3File(folder_name + "/" + current_file);
+                            Mp3File song1 = new Mp3File(folder_name + "/" + song1_s + ".mp3");
+                            Mp3File song2 = new Mp3File(folder_name + "/" + current_file + ".mp3");
                             long length1 = song1.getLengthInSeconds();
                             long length2 = song2.getLengthInSeconds();
                             
@@ -113,7 +127,7 @@ public class Main {
         
     }
     
-    public static void namingSongs(String folder, String[] songs, LinkedList song_name, String album_name) throws UnsupportedTagException, InvalidDataException, IOException, NotSupportedException{
+    public static void namingSongs(String folder, String[] songs, LinkedList song_list, String album_name) throws UnsupportedTagException, InvalidDataException, IOException, NotSupportedException{
         //the array is always half_size;
         //the songs are order 1. Oath Sign [TV-Size], 2. Oath Sign[Full], 3. to the beginning [TV-Size]
         //must change this ordering 
@@ -122,43 +136,65 @@ public class Main {
         int f_marker = 0; //increment by every odd number
         int l_marker = songs.length / 2; //increment by every even number
         String current = "";
-        int song_title = 0; //this is to remade the song_title
+        int title_index = 0; //this is to remade the song_title
         
         for(int i = 0; i < songs.length; i++){
+            //we're going through the entire linkedlist of song titles (half of the the songs[])
             if(i % 2 == 0){
-                current = (String) song_name.get(song_title);
-                song_title++; 
+                current = (String) song_list.get(title_index);
+                title_index++; 
             }
             
-            String s = songs[i];
-            s = folder + "/" + s + ".mp3"; //must be Anime/Hibike
+            Mp3File mp3file = new Mp3File(folder + "/" + songs[i] + ".mp3");
             
-            Mp3File mp3file = new Mp3File(s);
-            ID3v1 id3v1Tag;
+            ID3v1 v1;
             if (mp3file.hasId3v1Tag()) {
-                id3v1Tag = mp3file.getId3v1Tag();
+                v1 = mp3file.getId3v1Tag();
             }else{
-                id3v1Tag = new ID3v1Tag();
-        	mp3file.setId3v1Tag(id3v1Tag);
+                v1 = new ID3v1Tag();
+        	mp3file.setId3v1Tag(v1);
             }
             
             if((i+1) % 2 == 1){ //if the track is odd
-                id3v1Tag.setTitle(song_title + " [TV-Size]");
-                id3v1Tag.setTrack(Integer.toString(f_marker+1));
+                v1.setTitle(current + " [TV-Size]");
+                v1.setTrack(Integer.toString(f_marker+1));
                 f_marker++;
-                id3v1Tag.setAlbum(album_name);
-                id3v1Tag.setYear("");
-                mp3file.save(song_title + ".mp3");
+                v1.setAlbum(album_name);
+                v1.setYear("");
+                mp3file.save(current + "[TV-Size].mp3");
             }else{
-                id3v1Tag.setTitle(song_title + " [TV-Size]");
-                id3v1Tag.setTrack(Integer.toString(l_marker+1));
+                v1.setTitle(current + " [Full]");
+                v1.setTrack(Integer.toString(l_marker+1));
                 l_marker++;
-                id3v1Tag.setAlbum(album_name);
-                id3v1Tag.setYear("");
-                mp3file.save(song_title + ".mp3");
+                v1.setAlbum(album_name);
+                v1.setYear("");
+                mp3file.save(current + " [Full].mp3");
                 //do v2 tags later
             }
             
+            ID3v2 v2;
+            if(mp3file.hasId3v2Tag()){
+                v2 = mp3file.getId3v2Tag();
+            }else{
+                v2 = new ID3v24Tag();
+                mp3file.setId3v2Tag(v2);
+            }
+            
+            if((i+1) % 2 == 1){ //if the track is odd
+                v2.setTitle(current + " [TV-Size]");
+                v2.setTrack(Integer.toString(f_marker+1));
+                f_marker++;
+                v2.setAlbum(album_name);
+                v2.setYear("");
+                mp3file.save(current + "[TV-Size].mp3");
+            }else{
+                v2.setTitle(current + " [Full]");
+                v2.setTrack(Integer.toString(l_marker+1));
+                l_marker++;
+                v2.setAlbum(album_name);
+                v2.setYear("");
+                mp3file.save(current + " [Full].mp3");
+            }
         }
         
     }
