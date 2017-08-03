@@ -30,7 +30,7 @@ public class Main {
         
         System.out.println("What folder?");
         Scanner scan = new Scanner(System.in);
-        String folder = scan.nextLine();
+        String folder = "./" + scan.nextLine() + "/";
         String album_name = "";
         
         System.out.println("List the songs in your preferred order. Type -1 if you are finished");
@@ -82,9 +82,12 @@ public class Main {
         int placement = 0; //used to place the songs in the array
         
         File folder = new File(folder_name);
-        if(folder.exists())
+        if(!folder.exists())
             return null;
         File[] files = folder.listFiles();
+        if(files == null)
+            System.out.println("The files folder is null");
+        //System.out.println("The size of the files array is: " + files.length);
         
         //go through every string in the LinkedList
         for(int a = 0; a < song_list.size(); a++){
@@ -92,8 +95,9 @@ public class Main {
             
             //search through every file in the folder
             for(int i = 0; i < files.length; i++){
-                if(files[i].isFile()){
+                if(files[i].isFile() && files[i].getName().endsWith(".mp3")){
                     String current_file = files[i].getName();
+                    //System.out.println("Files in loop: " + current_file);
                     
                     //search 
                     if(current_file.contains(song_string)){
@@ -104,8 +108,8 @@ public class Main {
                         }
                         else if(results[placement] == null && placement % 2 == 1){ //the cursor moved to the second bit
                             String song1_s = results[placement - 1];
-                            Mp3File song1 = new Mp3File(folder_name + "/" + song1_s + ".mp3");
-                            Mp3File song2 = new Mp3File(folder_name + "/" + current_file + ".mp3");
+                            Mp3File song1 = new Mp3File(folder_name + "/" + song1_s);
+                            Mp3File song2 = new Mp3File(folder_name + "/" + current_file);
                             long length1 = song1.getLengthInSeconds();
                             long length2 = song2.getLengthInSeconds();
                             
@@ -132,6 +136,13 @@ public class Main {
         //the songs are order 1. Oath Sign [TV-Size], 2. Oath Sign[Full], 3. to the beginning [TV-Size]
         //must change this ordering 
         
+        //make a new folder with the modified songs
+        File new_dir = new File("./" + album_name);
+        if(!new_dir.exists()){
+            System.out.println("Creating a new directory: " + new_dir.getName());
+            new_dir.mkdir();
+        }
+        
         //USED FOR INDEX FOR ARRAY, BUT MUST +1 TO USE FOR ENTERING THE TAG
         int f_marker = 0; //increment by every odd number
         int l_marker = songs.length / 2; //increment by every even number
@@ -145,32 +156,16 @@ public class Main {
                 title_index++; 
             }
             
-            Mp3File mp3file = new Mp3File(folder + "/" + songs[i] + ".mp3");
+            Mp3File mp3file = new Mp3File(folder + "/" + songs[i]);
             
-            ID3v1 v1;
             if (mp3file.hasId3v1Tag()) {
-                v1 = mp3file.getId3v1Tag();
-            }else{
-                v1 = new ID3v1Tag();
-        	mp3file.setId3v1Tag(v1);
+                mp3file.removeId3v1Tag();
             }
-            
-            if((i+1) % 2 == 1){ //if the track is odd
-                v1.setTitle(current + " [TV-Size]");
-                v1.setTrack(Integer.toString(f_marker+1));
-                f_marker++;
-                v1.setAlbum(album_name);
-                v1.setYear("");
-                mp3file.save(current + "[TV-Size].mp3");
-            }else{
-                v1.setTitle(current + " [Full]");
-                v1.setTrack(Integer.toString(l_marker+1));
-                l_marker++;
-                v1.setAlbum(album_name);
-                v1.setYear("");
-                mp3file.save(current + " [Full].mp3");
-                //do v2 tags later
+            if (mp3file.hasCustomTag()) {
+              mp3file.removeCustomTag();
             }
+            //mp3file.save("Mp3FileWithoutTags.mp3");
+           
             
             ID3v2 v2;
             if(mp3file.hasId3v2Tag()){
@@ -180,20 +175,22 @@ public class Main {
                 mp3file.setId3v2Tag(v2);
             }
             
+            //IN THIS LOOP, ASK FOR ARTIST AND PICTURE
+            //USE A SCANNER HERE
             if((i+1) % 2 == 1){ //if the track is odd
                 v2.setTitle(current + " [TV-Size]");
                 v2.setTrack(Integer.toString(f_marker+1));
                 f_marker++;
                 v2.setAlbum(album_name);
                 v2.setYear("");
-                mp3file.save(current + "[TV-Size].mp3");
+                mp3file.save("./" + album_name + "/" + current + " [TV-Size].mp3");
             }else{
                 v2.setTitle(current + " [Full]");
                 v2.setTrack(Integer.toString(l_marker+1));
                 l_marker++;
                 v2.setAlbum(album_name);
                 v2.setYear("");
-                mp3file.save(current + " [Full].mp3");
+                mp3file.save("./" + album_name + "/" + current + " [Full].mp3");
             }
         }
         
