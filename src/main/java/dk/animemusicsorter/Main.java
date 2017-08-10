@@ -34,7 +34,7 @@ public class Main {
         String album_name = "";
         
         System.out.println("List the songs in your preferred order. Type -1 if you are finished");
-        int song_added = 1; //this will be the loop stopper
+        int song_added = 1;
         
         while(song_added == 1){
             String song_string = scan.nextLine();
@@ -60,7 +60,6 @@ public class Main {
         //should contain a array of all the songs in the order of TV Size, Full etc.
         String[] song_queue = new String[size*2];
         
-        //POSSIBLE ERROR OF PASSING BY REFERENCE
         song_queue = findingSongs(folder, song_list);
         
         if(song_queue == null){
@@ -135,6 +134,8 @@ public class Main {
         //the array is always half_size;
         //the songs are order 1. Oath Sign [TV-Size], 2. Oath Sign[Full], 3. to the beginning [TV-Size]
         //must change this ordering 
+        Song song = new Song(2);
+        Scanner input = new Scanner(System.in);
         
         //make a new folder with the modified songs
         File new_dir = new File("./" + album_name);
@@ -154,6 +155,24 @@ public class Main {
             if(i % 2 == 0){
                 current = (String) song_list.get(title_index);
                 title_index++; 
+                
+                song.setTitle(current); //set the internal data
+                song.setName(current); //set the external data
+                //track number is set here already
+                System.out.println("Who is the artist of " + current + "?"); //will be the same for TV-Size/Full
+                song.setArtist(input.nextLine());
+                System.out.println("What is the year of " + current + "?");
+                song.setYear(input.nextLine());
+                System.out.println("Who is the composer of " + current + "?");
+                song.setComposer(input.nextLine());
+                System.out.println("Who is the publisher of " + current + "?");
+                song.setPublisher(input.nextLine());
+                System.out.println("Who is the original artist?");
+                song.setOriginal_artist(input.nextLine());
+                System.out.println("Who is the album artist?"); //do more later
+                song.setAlbum_artist(input.nextLine());
+                System.out.println("Copyright?");
+                song.setCopyright(input.nextLine());
             }
             
             Mp3File mp3file = new Mp3File(folder + "/" + songs[i]);
@@ -164,7 +183,6 @@ public class Main {
             if (mp3file.hasCustomTag()) {
               mp3file.removeCustomTag();
             }
-            //mp3file.save("Mp3FileWithoutTags.mp3");
            
             
             ID3v2 v2;
@@ -175,6 +193,14 @@ public class Main {
                 mp3file.setId3v2Tag(v2);
             }
             
+            v2.setArtist(song.getArtist());
+            v2.setYear(song.getYear());
+            v2.setComposer(song.getComposer());
+            v2.setPublisher(song.getPublisher());
+            v2.setOriginalArtist(song.getOriginal_artist());
+            v2.setAlbumArtist(song.getAlbum_artist());
+            v2.setCopyright(song.getCopyright());
+            
             //IN THIS LOOP, ASK FOR ARTIST AND PICTURE
             //USE A SCANNER HERE
             if((i+1) % 2 == 1){ //if the track is odd
@@ -182,17 +208,26 @@ public class Main {
                 v2.setTrack(Integer.toString(f_marker+1));
                 f_marker++;
                 v2.setAlbum(album_name);
-                v2.setYear("");
+                System.out.println("Any lyrics for " + current + " [TV-Size]?");
+                v2.setLyrics(input.nextLine());
+                System.out.println("Any comments for " + current + " [TV-Size]?");
+                v2.setComment(input.nextLine());
+                //System.out.println("Genre?");
+                //v2.setGenre(0);
                 mp3file.save("./" + album_name + "/" + current + " [TV-Size].mp3");
             }else{
                 v2.setTitle(current + " [Full]");
                 v2.setTrack(Integer.toString(l_marker+1));
                 l_marker++;
                 v2.setAlbum(album_name);
-                v2.setYear("");
+                System.out.println("Any lyrics for " + current + " [Full]?");
+                v2.setLyrics(input.nextLine());
+                System.out.println("Any comments for " + current + " [Full]?");
+                v2.setComment(input.nextLine());
                 mp3file.save("./" + album_name + "/" + current + " [Full].mp3");
             }
         }
         
     }
+    
 }
